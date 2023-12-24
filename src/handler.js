@@ -2,7 +2,7 @@ import { nanoid } from 'nanoid';
 // eslint-disable-next-line import/extensions
 import books from './books.js';
 
-export const addBookHandler = async (req, res) => {
+export const addBookHandler = async (request, h) => {
   const {
     name,
     year,
@@ -12,24 +12,24 @@ export const addBookHandler = async (req, res) => {
     pageCount,
     readPage,
     reading,
-  } = req.body;
+  } = request.payload;
 
   if (name === undefined || name === '') {
-    res.status(400);
-    res.json({
+    const response = h.response({
       status: 'fail',
       message: 'Gagal menambahkan buku. Mohon isi nama buku',
     });
-    return res;
+    response.code(400);
+    return response;
   }
 
   if (readPage > pageCount) {
-    res.status(400);
-    res.json({
+    const response = h.response({
       status: 'fail',
       message: 'Gagal menambahkan buku. readPage tidak boleh lebih besar dari pageCount',
     });
-    return res;
+    response.code(400);
+    return response;
   }
 
   const id = nanoid(16);
@@ -56,31 +56,34 @@ export const addBookHandler = async (req, res) => {
   const isSuccess = books.filter((book) => book.id === id).length > 0;
 
   if (isSuccess) {
-    res.status(201);
-    res.json(
-      {
-        status: 'success',
-        message: 'Buku berhasil ditambahkan',
-        data: {
-          bookId: id,
-        },
+    const response = h.response({
+      status: 'success',
+      message: 'Buku berhasil ditambahkan',
+      data: {
+        bookId: id,
       },
-    );
-    return res;
+    });
+    response.code(201);
+    return response;
   }
-
-  res.status(500);
-  res.json({
+  const response = h.response({
     status: 'fail',
     message: 'Buku gagal ditambahkan',
   });
-  return res;
+  response.code(500);
+  return response;
 };
 
-export const getAllBookHandler = async (req, res) => {
-  const isUseQueryParams = (Object.keys(req.query).length > 0);
+export const getAllBookHandler = async (request, h) => {
+  const { id } = request.params;
+  const isUseIdPathParam = (id !== undefined);
+  if (isUseIdPathParam) {
+    // eslint-disable-next-line no-use-before-define
+    return getBookByIdHandler(request, h);
+  }
+  const isUseQueryParams = (Object.keys(request.query).length > 0);
   if (isUseQueryParams) {
-    const { name, reading, finished } = req.query;
+    const { name, reading, finished } = request.query;
     const isReading = (reading > 0);
     const isFinished = (finished > 0);
     const bookName = (name !== undefined)
@@ -97,59 +100,61 @@ export const getAllBookHandler = async (req, res) => {
           : bookName;
     // eslint-disable-next-line no-shadow
     const data = dataFiltered.map(({ id, name, publisher }) => ({ id, name, publisher }));
-    res.status = 200;
-    res.json({
+    const response = h.response({
       status: 'success',
       data: {
         books: data,
       },
     });
-    return res;
+    response.code = 200;
+    return response;
   }
+  // eslint-disable-next-line no-shadow
   const data = books.map(({ id, name, publisher }) => ({ id, name, publisher }));
-  res.status = 200;
-  res.json({
+  const response = h.response({
     status: 'success',
     data: {
       books: data,
     },
   });
-  return res;
+  response.code = 200;
+  return response;
 };
 
 // eslint-disable-next-line consistent-return
-export const getBookByIdHandler = async (req, res) => {
-  const { id } = req.params;
+export const getBookByIdHandler = async (request, h) => {
+  const { id } = request.params;
   const data = books.filter((book) => book.id === id);
   if (data.length > 0) {
-    res.status(200);
-    res.json({
+    const response = h.response({
       status: 'success',
       data: {
         book: data[0],
       },
     });
-    return res;
+    response.code(200);
+    return response;
   }
-  res.status(404);
-  res.json({
+  const response = h.response({
     status: 'fail',
     message: 'Buku tidak ditemukan',
   });
+  response.code(404);
+  return response;
 };
 
 // eslint-disable-next-line consistent-return
-export const editBookByIdHandler = async (req, res) => {
-  const { id } = req.params;
+export const editBookByIdHandler = async (request, h) => {
+  const { id } = request.params;
   const index = books.findIndex((book) => book.id === id);
 
   if (index < 0) {
-    res.status(404);
-    res.json({
+    const response = h.response({
       status: 'fail',
       message: 'Gagal memperbarui buku. Id tidak ditemukan',
     });
-    return res;
+    response.code(404);
+    return response;
   }
 
   const {
@@ -161,25 +166,25 @@ export const editBookByIdHandler = async (req, res) => {
     pageCount,
     readPage,
     reading,
-  } = req.body;
+  } = request.payload;
 
   if (!name || name === '') {
-    res.status(400);
-    res.json({
+    const response = h.response({
       status: 'fail',
       message: 'Gagal memperbarui buku. Mohon isi nama buku',
     });
-    return res;
+    response.code(400);
+    return response;
   }
   const currentreadPage = readPage || books[index].readPage;
   const currentPageCount = pageCount || books[index].pageCount;
   if (currentreadPage > currentPageCount) {
-    res.status(400);
-    res.json({
+    const response = h.response({
       status: 'fail',
       message: 'Gagal memperbarui buku. readPage tidak boleh lebih besar dari pageCount',
     });
-    return res;
+    response.code(400);
+    return response;
   }
 
   if (index !== -1) {
@@ -198,38 +203,38 @@ export const editBookByIdHandler = async (req, res) => {
       finished,
       updatedAt,
     };
-    res.status(200);
-    res.json({
+    const response = h.response({
       status: 'success',
       message: 'Buku berhasil diperbarui',
     });
-    return res;
+    response.code(200);
+    return response;
   }
-  res.status(500);
-  res.json({
+  const response = h.response({
     status: 'fail',
     message: 'Buku gagal diperbarui',
   });
+  response.code(500);
+  return response;
 };
 
-export const deleteBookByIdHandler = async (req, res) => {
-  const { id } = req.params;
+export const deleteBookByIdHandler = async (request, h) => {
+  const { id } = request.params;
   const index = books.findIndex((book) => book.id === id);
 
   if (index !== -1) {
     books.splice(index, 1);
-    res.status(200);
-    res.json({
+    const response = h.response({
       status: 'success',
       message: 'Buku berhasil dihapus',
     });
-    return res;
+    response.code(200);
+    return response;
   }
-
-  res.status(404);
-  res.json({
+  const response = h.response({
     status: 'fail',
     message: 'Buku gagal dihapus. Id tidak ditemukan',
   });
-  return res;
+  response.code(404);
+  return response;
 };

@@ -1,32 +1,31 @@
-import express from 'express';
-import morgan from 'morgan';
-import cors from 'cors';
+// eslint-disable-next-line import/no-extraneous-dependencies
+import Hapi from '@hapi/hapi';
+// import morgan from 'morgan';
+// import cors from 'cors';
 import { config } from 'dotenv';
-// eslint-disable-next-line import/extensions
+
+/** import routes */
+// eslint-disable-next-line import/no-unresolved, import/extensions
 import router from './router.js';
 
-const app = express();
-
-/** app middleware */
-app.use(morgan('tiny'));
-app.use(cors());
-app.use(express.json());
+/** server use dotenv */
 config();
 
-/** application port */
+/** server use port */
 const port = process.env.PORT || 9000;
 
-/** routes */
-app.use(router);
+const init = async () => {
+  const server = Hapi.server({
+    port,
+    host: 'localhost',
+  });
 
-app.get('/', (req, res) => {
-  try {
-    res.json('Get Request');
-  } catch (error) {
-    console.log(error);
-  }
-});
+  /** server routes */
+  server.route(router);
 
-app.listen(port, () => {
-  console.log(`server connected to http://localhost:${port}`);
-});
+  /** server start */
+  await server.start();
+  console.log(`server started at ${server.info.uri}`);
+};
+
+init();
