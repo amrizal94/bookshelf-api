@@ -83,7 +83,6 @@ export const getAllBookHandler = async (req, res) => {
     const { name, reading, finished } = req.query;
     const isReading = (reading > 0);
     const isFinished = (finished > 0);
-    console.log(name);
     const bookName = (name !== undefined)
       ? books.filter((book) => book.name.toLowerCase().indexOf(name.toLowerCase()) !== -1)
       : books;
