@@ -1,7 +1,5 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import Hapi from '@hapi/hapi';
-// import morgan from 'morgan';
-// import cors from 'cors';
 import { config } from 'dotenv';
 
 /** import routes */
